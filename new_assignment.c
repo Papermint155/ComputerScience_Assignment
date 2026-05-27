@@ -83,7 +83,7 @@ double CheckValidDouble(char *message){ // puting * to wrong (solve)
             ClearInputBuffer();
             return value;
         } else {
-            printf("Please enter a valid positive number for this");
+            printf("Please enter a valid positive number for this field.\n");
             ClearInputBuffer();
         }
     }
@@ -377,23 +377,22 @@ void AddRecord(int user_index) {
     strcpy(new_record->category_name, category_menu[category_choice]); // copy the string to the structure category_name , (fixed)
 
     while (1) {
-        ClearScreen();  
+        ClearScreen();
         printf("Enter Item Description (Max 49 chars): ");
-        fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin);
-        RemoveNewLine(new_record->expenses_description); //fixed the enter bug cause misallingmnet of the string
-        if (new_record->expenses_description != NULL) { // check the value enter isnt a null value
-            break;
-        }
-        if (strchr(new_record->expenses_description, '\n')) {//strchr: standard library function used to locate the first occurrence of a specific character within a null-terminated string (search the "/n" character in the Description)
-            RemoveNewLine(new_record->expenses_description); //then pass it to this function to remove the "\n"
-            if (strlen(new_record->expenses_description) == 0) { // check the string is it empty?
-                printf("[!] Error: Description cannot be empty.\n"); // do if empty
-                continue; // this call the function continue the while loop dont jump to the break below
+        if (fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin) != NULL) { // check the value enter isnt a null value
+            if (strchr(new_record->expenses_description, '\n')) {//strchr: standard library function used to locate the first occurrence of a specific character within a null-terminated string (search the "/n" character in the Description)
+                RemoveNewLine(new_record->expenses_description); //then pass it to this function to remove the "\n"
+                if (strlen(new_record->expenses_description) == 0) { // check the string is it empty?
+                    printf("[!] Error: Description cannot be empty.\n");
+                    getch(); 
+                    continue; // this call the function continue the while loop dont jump to the break below
+                }
+                break; // if all ok, break this loop
+            } else {
+                printf("[!] Error: Description too long! Please keep it under 50 characters.\n"); // if cant find the "\n" mean it has been cut off from the string array (another word the string is to long)
+                ClearInputBuffer(); // clear the leftover data in the input memory
+                getch();
             }
-            break; // if all ok, break this loop
-        } else {
-            printf("[!] Error: Description too long! Please keep it under 50 characters.\n"); // if cant find the "\n" mean it has been cut off from the string array (another word the string is to long)
-            ClearInputBuffer(); // clear the leftover data in the input memory
         }
     }
     new_record->item_amount = CheckValidDouble("Enter the amount for this item: $"); // get the amount and check is it valid or not
@@ -520,7 +519,7 @@ int main (){
                 //ClearInputBuffer();
                 while(logged_in){
                     GetMonthlyIncome(current_active_user, student_list[current_active_user].current_month); // call function and pass the variable to it
-                    char dash_menu[6][30] = {"Add Record","Dashboard", "Next Month", "History", "Logout"};
+                    char dash_menu[5][30] = {"Add Record","Dashboard", "Next Month", "History", "Logout"};
                     int dash_choice = SelectOption(dash_menu, 6);
                     if (dash_choice == 0) AddRecord(current_active_user);
                     else if (dash_choice == 1) PrintDashBoard(current_active_user, student_list[current_active_user].current_month);
