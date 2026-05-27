@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h> // fixed system cls
 #include <string.h>
+#include <math.h> // for isnan() function 
 #include <conio.h> // getch() function
 
 //Global Variable
@@ -32,7 +33,7 @@ struct MonthlyData
     char month_name [20];
     double month_income;
     double total_spending;
-    double  category_totals[5]; // Food, Transport, Entertainment, Study, Bill&Expenses
+    double category_totals[5]; // Food, Transport, Entertainment, Study, Bill&Expenses
     struct expensesRecord history[100];
     int record_count; // added record_count here , as if use sizeof() to read the struct the size is the full size ,not the size already with data
 };
@@ -74,7 +75,7 @@ int CheckInputBlank(char* str){ //debug at here, forgot it will return int
     return 1;
 }
 
-double CheckValidDouble(char* message){
+double CheckValidDouble(char *message){ // puting * to wrong (solve)
     double value; 
     while (1){
         printf("%s", message);
@@ -94,7 +95,7 @@ int SelectOption(char option[][30], int total_choice){ // havent conplete yet
     int input;
     while(1){
         ClearScreen();
-        printf("Please use Arrow key(Up and down to select)");
+        printf("Please use Arrow key(Up and down to select)\n");//minor update forgot to put \n
         for(int i = 0; i < total_choice; i++){
             if (i == current_selection){
                 printf("-> %s\n", option[i]);
@@ -196,6 +197,7 @@ void LoadUserData(){
     return 0;
 */
 void RegisterUser(){
+    ClearScreen(); //added clear screen 
     if (registered_user >= 5) { //check the count < 5 , prevent overflow
         printf("Maximum user limit reached.\n"); // reject add account if already achieve the max number 
         getch(); //wait till the user want to proceed 
@@ -207,6 +209,7 @@ void RegisterUser(){
 
     //Username Loop (same logic as the name part)
     while (1) {
+        printf("---Register New User--- (press 0 to cancel)\n"); // update the message to register new user
         printf("Username (Max 20): ");
         fgets(temp_input, sizeof(temp_input), stdin);
 
@@ -217,12 +220,15 @@ void RegisterUser(){
             printf("[!] Error: Username too long!\n");
             ClearInputBuffer();
             getch();
+            ClearScreen();
             continue;
         }
 
         RemoveNewLine(temp_input);
         if (strlen(temp_input) >= 20 || CheckInputBlank(temp_input)) {
             printf("[!] Error: Username must be 1-19 characters.\n");
+            getch();
+            ClearScreen();//ClearScreen if error message
             continue;
         }
         strcpy(new_student->user_name, temp_input); 
@@ -244,6 +250,8 @@ void RegisterUser(){
         RemoveNewLine(temp_input);
         if (strlen(temp_input) >= 20 || CheckInputBlank(temp_input)) {
             printf("[!] Error: Password must be 1-19 characters.\n");
+            ClearInputBuffer();
+            getch();
             continue;
         }
         strcpy(new_student->user_password, temp_input); 
@@ -253,7 +261,7 @@ void RegisterUser(){
     new_student->current_month = 0; //set the new student month index to 0 as he is new user
     registered_user++; //add the register user count 
     SaveUserData();
-    printf("\nNew User Registration Success! Press any key to continue...");
+    printf("\nNew User Registration Success! \nPress any key to continue...");
     getch(); //wait till the user want to proceed ;
 }
 
@@ -261,8 +269,14 @@ int UserLogin(){ // same logic as above so i direct use the code from register p
     int user_index;
     char input_username[25], input_password[25]; // Use slightly larger buffers to detect
     ClearScreen();
+    if(registered_user == 0){ // if no user in the system, then directly return to main menu
+        printf("No user found. Please register first! \nPress any key to return...");
+        getch();
+        return -1; // return -1 to indicate login failure
+    }
     //Username Loop (same logic as the name part)
     while (1) {
+        printf("---Login--- (press 0 to cancel)\n"); // update the message to login
         printf("Username (Max 20): ");
         fgets(input_username, sizeof(input_username), stdin);
 
@@ -273,12 +287,15 @@ int UserLogin(){ // same logic as above so i direct use the code from register p
             printf("[!] Error: Username too long!\n");
             ClearInputBuffer();
             getch();
+            ClearScreen();
             continue;
         }
 
         RemoveNewLine(input_username);
         if (strlen(input_username) >= 20 || CheckInputBlank(input_username)) {
             printf("[!] Error: Username must be 1-19 characters.\n");
+            getch();
+            ClearScreen();
             continue;
         }
         break;
@@ -302,23 +319,24 @@ int UserLogin(){ // same logic as above so i direct use the code from register p
             continue;
         }
         break;
+        ClearInputBuffer();
     }
     for (int i = 0; i < registered_user; i++) { //loop through the student list to find the username and the password got match??
         if (strcmp(input_username, student_list[i].user_name) == 0 && strcmp(input_password, student_list[i].user_password) == 0) {
             return i; // if have match return the index of the student in the array 
         }
     }
-    printf("\n[!] Invalid login. Press any key...");
+    printf("\n[!] Invalid login. \nPress any key to continue...");
     getch();
     return -1;
 }
 void GetMonthlyIncome(int user_index, int month_index){
     struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
     if (selected_month->month_income == 0){
-        while (1)
-        {
+
+        while (1) {
             ClearScreen();
-            printf("\n ----- Monthly Income (Month %d) -----\n", month_index + 1);
+            printf("----- Monthly Income (Month %d) -----\n", month_index + 1);
             printf("Please enter the Month Name(eg. June): ");
             //fget(selected_month->month_name, 20, stdin);
             fgets(selected_month->month_name, sizeof(selected_month->month_name), stdin);
@@ -327,10 +345,13 @@ void GetMonthlyIncome(int user_index, int month_index){
             if(!CheckInputBlank(selected_month->month_name)){
                 break;
             }else{
-                printf("Monthly Income only can be a positive and non-zero rational number");
+                printf("[!] Error: Month name cannot be empty.\n");
                 getch(); //let user have time the see the message
             }
         }
+        selected_month->month_income = CheckValidDouble("Set Monthly Income: ");// debug missing asking value // move out of while loop
+
+        SaveUserData();
     }
 }
 
@@ -356,8 +377,11 @@ void AddRecord(int user_index) {
     strcpy(new_record->category_name, category_menu[category_choice]); // copy the string to the structure category_name , (fixed)
 
     while (1) {
+        ClearScreen();  
         printf("Enter Item Description (Max 49 chars): ");
-        if (fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin) != NULL) { // check the value enter isnt a null value
+        fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin);
+        RemoveNewLine(new_record->expenses_description); //fixed the enter bug cause misallingmnet of the string
+        if (new_record->expenses_description != NULL) { // check the value enter isnt a null value
             break;
         }
         if (strchr(new_record->expenses_description, '\n')) {//strchr: standard library function used to locate the first occurrence of a specific character within a null-terminated string (search the "/n" character in the Description)
@@ -384,17 +408,19 @@ void AddRecord(int user_index) {
 }
 
 void DisplayASCIIGraph(float percentage){
-    //int star_no = (int) (percentage/2.5);//too long the star
-    int star_no = (int) (percentage/5);
+    int star_no = (int) (percentage/2.5);//too long the star (test)
+    if (percentage < 0) percentage = 0;
+    else if (isnan(percentage)) percentage = 0; // if the percentage is not a number (NaN), set it to 0
+    //int star_no = (int) (percentage/5);
     printf("[");
-    for (int i = 0; i < 20; i++){
+    for (int i = 0; i < 40; i++){
         if (i < star_no){
             printf("*");
         }else{
             printf(" ");
         }
     }
-    printf("] %.2f%%"/*%% so it can print %*/,percentage); //https://prepinsta.com/c-programming-language-tutorial/how-to-print-percentile-using-printf/
+    printf("] %.2f%%\n"/*%% so it can print %*/,percentage); //https://prepinsta.com/c-programming-language-tutorial/how-to-print-percentile-using-printf/
 }
 
 /* (Planning Dash board layout)
@@ -421,18 +447,18 @@ void CalculateandPrintFinancialStatusandKaomoji(double total_spending, double mo
     float budget = monthly_income - total_spending;
     if(expense_percentage >= 0){
         if (expense_percentage < 40.0){
-            printf("Excellent Surplus   |Grade: A || ($_$) Simply Lovely! | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Excellent Surplus   |Grade: A || ($_$) Simply Lovely! | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 60.0){
-            printf("Healthy Balance     |Grade: B || ( •⌄• )b Looking Good| Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Healthy Balance     |Grade: B || ( •⌄• )b Looking Good| Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 75.0){
-            printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 90.0){
-            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else{
-            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         };
     }else{
-        printf("Somthing is wrong with the program!!");// for debug use
+        printf("Somthing is wrong with the program!!\n");// for debug use
     }
     
 }
@@ -441,30 +467,37 @@ void PrintDashBoard(int user_index, int month_index){
     struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
     double warning_line = selected_month->month_income*0.15;
     float percentage;
+    ClearScreen();
     printf("Hi, %s : Month : %s \n",student_list[user_index].user_name, selected_month->month_name);
     printf("--------------------------------------------------------------------------------------\n");
     printf("Monthly Income: %lf\n", selected_month->month_income);
     printf("Total Spending: %lf\n", selected_month->total_spending);
-    printf("Percentage Spend: %.2f%%\n", (selected_month->total_spending/selected_month->month_income));
+    printf("Percentage Spend: %.2f%%\n", (selected_month->total_spending/selected_month->month_income )*100);
     printf("--------------------------------------------------------------------------------------\n");
-    DisplayASCIIGraph(percentage);
+    printf("Bar Graph\n");
+    char *cat_names[] = {"Food", "Transport", "Entertainment", "Study", "Bill&Expenses"}; // The category type
+    for (int i = 0; i < 5; i++) {
+        // Calculate category percentage of total spending 
+        float spending_percentage = (selected_month->total_spending > 0) ? (selected_month->category_totals[i] / selected_month->total_spending) * 100 : 0; //condition ? (value_if_true):(value_if_false)
+        printf("%-15s ", cat_names[i]); // print 15 space and the category name 
+        DisplayASCIIGraph(spending_percentage); //call function 
+    }
     printf("--------------------------------------------------------------------------------------\n");
     CalculateandPrintFinancialStatusandKaomoji(selected_month->total_spending,selected_month->month_income);
     //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
     printf("--------------------------------------------------------------------------------------\n");
     printf("Transaction History\n");
+    printf("No.|      Category      |                Description              | Flag|Amount   |\n"); // moveout 
     for (int i = 0; i < selected_month->record_count ;i++){
         struct expensesRecord *record = &selected_month->history[i];
         char noted = (record->item_amount > warning_line)? '!': ' '; 
         //(condition) ? if true : if false
-
-        printf("No.|      Category      |                Description              | Flag|Amount");
-        printf("%03d|%-20s|%-20.20s|%c|%-6.2f|", i, record->category_name, record->expenses_description, noted, record->item_amount);
+        printf("%03d|%20s|%41s|%5c|%9.2f|\n", i+1, record->category_name, record->expenses_description, noted, record->item_amount);
         
     }
 
     if (selected_month->record_count == 0){
-        printf("No record found in Month %s",selected_month->month_name);
+        printf("No record found in Month %s\n",selected_month->month_name);
     }
     printf("--------------------------------------------------------------------------------------\n");
     printf("Press Any key to Return");
@@ -480,23 +513,24 @@ int main (){
 
     while(running){ // check is 1 or not : 0 is false the the program will exit 
         int choice = SelectOption(entry_option, 3);
-        if (choice == 0){ // this mean user choos login
-            int login_result = UserLogin();
-            if (login_result != -1){ // if the login result is -1 mean the login fail, so only when it is not -1 then proceed to the dash board
+        if (choice == 0){ // this mean user choose login
+            current_active_user = UserLogin();
+            if (current_active_user != -1){ // if the login result is -1 mean the login fail, so only when it is not -1 then proceed to the dash board
                 int logged_in = 1;
+                //ClearInputBuffer();
                 while(logged_in){
                     GetMonthlyIncome(current_active_user, student_list[current_active_user].current_month); // call function and pass the variable to it
                     char dash_menu[6][30] = {"Add Record","Dashboard", "Next Month", "History", "Logout"};
                     int dash_choice = SelectOption(dash_menu, 6);
-                    if (dash_choice == 0) AddRecord(login_result);
-                    else if (dash_choice == 1) PrintDashBoard(login_result, student_list[login_result].current_month);
-                    else if (dash_choice == 2) student_list[login_result].current_month++;
-                    else if (dash_choice == 3) {
+                    if (dash_choice == 0) AddRecord(current_active_user);
+                    else if (dash_choice == 1) PrintDashBoard(current_active_user, student_list[current_active_user].current_month);
+                    else if (dash_choice == 2) student_list[current_active_user].current_month++;
+                    else if (dash_choice == 3) {    
                         char history_menu[12][30];
-                        int month_count = student_list[login_result].current_month + 1;
-                        for(int i=0; i < month_count; i++) strcpy(history_menu[i], student_list[login_result].month[i].month_name);
-                        int h_choice = SelectOption(history_menu, month_count);
-                        PrintDashBoard(login_result, h_choice);
+                        int month_count = student_list[current_active_user].current_month + 1;
+                        for(int i=0; i < month_count; i++) strcpy(history_menu[i], student_list[current_active_user].month[i].month_name);
+                        int history_choice = SelectOption(history_menu, month_count);
+                        PrintDashBoard(current_active_user, history_choice);
                     }
                     else if (dash_choice == 4) logged_in = 0;
                 }
