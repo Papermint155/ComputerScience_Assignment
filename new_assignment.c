@@ -124,8 +124,8 @@ int SelectOption(char option[][30], int total_choice){ // havent conplete yet
 }
 
 void SaveUserData (){
-    //FILE *file_path = fopen("userdata.bin", "wb"); // 'wb' = write binary
-    FILE *file_path = fopen("userdata.txt", "w"); // 'wb' = write binary
+    FILE *file_path = fopen("userdata.bin", "wb"); // 'wb' = write binary
+    //FILE *file_path = fopen("userdata.txt", "w"); // 'wb' = write binary
     if (file_path == NULL) {//check weather it is no file 
         printf("[!] Error saving data!\n"); //if cant save , print error data
         return;
@@ -163,8 +163,8 @@ void SaveUserData (){
 
 
 void LoadUserData(){
-    //FILE *file_path = fopen("userdata.bin", "rb"); // 'rb' = read binary , if this can be use in the securuty
-    FILE *file_path = fopen("userdata.txt", "r"); // use txt file for visualise the data in it 
+    FILE *file_path = fopen("userdata.bin", "rb"); // 'rb' = read binary , if this can be use in the securuty
+    //FILE *file_path = fopen("userdata.txt", "r"); // use txt file for visualise the data in it 
     if (file_path == NULL) { // check weather it is no file 
         return; // No file yet, just return without value to exit the funtion
     }
