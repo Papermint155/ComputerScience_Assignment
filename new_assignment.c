@@ -9,7 +9,7 @@
 
 //---lib---
 #include <stdio.h>
-#include <stdio.h>
+#include <stdlib.h> // fixed system cls
 #include <string.h>
 #include <conio.h> // getch() function
 
@@ -18,8 +18,24 @@ int current_active_user = -1;
 int registered_user = 0; 
 
 
-// Structure
-struct userStudent student_list[5];  
+// Structure (bug fixed the structure need to from lowest to highest)
+
+struct expensesRecord
+{
+    char category_name[20];
+    char expenses_description [50];
+    double item_amount;
+};
+
+struct MonthlyData
+{
+    char month_name [20];
+    double month_income;
+    double total_spending;
+    double  category_totals[5]; // Food, Transport, Entertainment, Study, Bill&Expenses
+    struct expensesRecord history[100];
+    int record_count; // added record_count here , as if use sizeof() to read the struct the size is the full size ,not the size already with data
+};
 
 struct userStudent {
     int user_id;
@@ -29,25 +45,12 @@ struct userStudent {
     int current_month;
 };
 
-struct MonthlyData
-{
-    char month_name [20];
-    double month_income;
-    double total_spending;
-    struct expensesRecord history[100];
-    int record_count; // added record_count here , as if use sizeof() to read the struct the size is the full size ,not the size already with data
-};
-
-struct expensesRecord
-{
-    char category_name[20];
-    char expenses_description [50];
-    double item_amount;
-};
+struct userStudent student_list[5];  
 
 // Function
 void ClearScreen(){
-    clrscr();
+    system("cls");
+    //clrscr(); cant use (got bug)
     // printf("\033[H\033[2J"); This method not working (By printing a lot of new line)
     // fflush(stdout); 
 }
@@ -86,7 +89,7 @@ double CheckValidDouble(char* message){
     return value;
 }
 
-int SelectOption(char option[][30], int total_choice){
+int SelectOption(char option[][30], int total_choice){ // havent conplete yet 
     int current_selection = 0; 
     int input;
     while(1){
@@ -97,7 +100,7 @@ int SelectOption(char option[][30], int total_choice){
 }
 
 void SaveUserData (){
-    FILE *file_path = fopen("userdata.bin", "wb"); // 'wb' = write binary
+    //FILE *file_path = fopen("userdata.bin", "wb"); // 'wb' = write binary
     FILE *file_path = fopen("userdata.txt", "w"); // 'wb' = write binary
     if (file_path == NULL) {//check weather it is no file 
         printf("[!] Error saving data!\n"); //if cant save , print error data
@@ -170,11 +173,121 @@ void LoadUserData(){
     return 0;
 */
 void RegisterUser(){
+    if (registered_user >= 5) { //check the count < 5 , prevent overflow
+        printf("Maximum user limit reached.\n"); // reject add account if already achieve the max number 
+        getch(); //wait till the user want to proceed 
+        return;
+    }
+    
+    struct userStudent *new_student = &student_list[registered_user];
+    char temp_input[150]; // Use a larger buffer to catch the overflow to let user enter over 50 
 
+    //Username Loop (same logic as the name part)
+    while (1) {
+        printf("Username (Max 20): ");
+        fgets(temp_input, sizeof(temp_input), stdin);
+
+        // Check for Return/Cancel first
+        if (strcmp(temp_input, "0\n") == 0) return; //if cancel then exit to main menu
+
+        if (strchr(temp_input, '\n') == NULL) {
+            printf("[!] Error: Username too long!\n");
+            ClearInputBuffer();
+            getch();
+            continue;
+        }
+
+        RemoveNewLine(temp_input);
+        if (strlen(temp_input) >= 20 || CheckInputBlank(temp_input)) {
+            printf("[!] Error: Username must be 1-19 characters.\n");
+            continue;
+        }
+        strcpy(new_student->user_name, temp_input); 
+        break;
+    }
+
+    //Password Loop 
+    while (1) {
+       printf("Password (Max 20): ");
+        fgets(temp_input, sizeof(temp_input), stdin);
+
+        if (strchr(temp_input, '\n') == NULL) {
+            printf("[!] Error: Password too long!\n");
+            ClearInputBuffer();
+            getch();
+            continue;
+        }
+
+        RemoveNewLine(temp_input);
+        if (strlen(temp_input) >= 20 || CheckInputBlank(temp_input)) {
+            printf("[!] Error: Password must be 1-19 characters.\n");
+            continue;
+        }
+        strcpy(new_student->user_password, temp_input); 
+        break;
+    }
+
+    new_student->current_month = 0; //set the new student month index to 0 as he is new user
+    registered_user++; //add the register user count 
+    SaveUserData();
+    printf("\nNew User Registration Success! Press any key to continue...");
+    getch(); //wait till the user want to proceed ;
 }
 
-int UserLogin(){
+int UserLogin(){ // same logic as above so i direct use the code from register part and change the message and the logic of check username and password
+    int user_index;
+    char input_username[25], input_password[25]; // Use slightly larger buffers to detect
+    ClearScreen();
+    //Username Loop (same logic as the name part)
+    while (1) {
+        printf("Username (Max 20): ");
+        fgets(input_username, sizeof(input_username), stdin);
 
+        // Check for Return/Cancel first
+        if (strcmp(input_username, "0\n") == 0) return -1; //if cancel then exit to main menu
+
+        if (strchr(input_username, '\n') == NULL) {
+            printf("[!] Error: Username too long!\n");
+            ClearInputBuffer();
+            getch();
+            continue;
+        }
+
+        RemoveNewLine(input_username);
+        if (strlen(input_username) >= 20 || CheckInputBlank(input_username)) {
+            printf("[!] Error: Username must be 1-19 characters.\n");
+            continue;
+        }
+        break;
+    }
+
+    //Password Loop 
+    while (1) {
+       printf("Password (Max 20): ");
+        fgets(input_password, sizeof(input_password), stdin);
+
+        if (strchr(input_password, '\n') == NULL) {
+            printf("[!] Error: Password too long!\n");
+            ClearInputBuffer();
+            getch();
+            continue;
+        }
+
+        RemoveNewLine(input_password);
+        if (strlen(input_password) >= 20 || CheckInputBlank(input_password)) {
+            printf("[!] Error: Password must be 1-19 characters.\n");
+            continue;
+        }
+        break;
+    }
+    for (int i = 0; i < registered_user; i++) { //loop through the student list to find the username and the password got match??
+        if (strcmp(input_username, student_list[i].user_name) == 0 && strcmp(input_password, student_list[i].user_password) == 0) {
+            return i; // if have match return the index of the student in the array 
+        }
+    }
+    printf("\n[!] Invalid login. Press any key...");
+    getch();
+    return -1;
 }
 void GetMonthlyIncome(int user_index, int month_index){
     struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
@@ -185,7 +298,7 @@ void GetMonthlyIncome(int user_index, int month_index){
             printf("\n ----- Monthly Income (Month %d) -----\n", month_index + 1);
             printf("Please enter the Month Name(eg. June): ");
             //fget(selected_month->month_name, 20, stdin);
-            fget(selected_month->month_name, sizeof(selected_month->month_name), stdin);
+            fgets(selected_month->month_name, sizeof(selected_month->month_name), stdin);
             RemoveNewLine(selected_month->month_name);
 
             if(!CheckInputBlank(selected_month->month_name)){
@@ -209,22 +322,46 @@ void AddRecord(int user_index) {
     }
 
     char category_menu[6][30] = {"Back/Return", "Food", "Transport", "Entertainment", "Study", "Bill&Expenses"};// 2D array, first [] is save how may string in the array , second [] is string array.
-    int category_choice = SelectMenuOption(category_menu, 6); //pass the array to function, and told them we got how may array (String array in 2D array)
+    int category_choice = SelectOption(category_menu, 6); //pass the array to function, and told them we got how may array (String array in 2D array)
     
     if(category_choice == 0){
         return;
     }
     int adjusted_category_idx = category_choice - 1; // Correctly maps Food to 0, Transport to 1, etc later will use
 
-    struct expenseRecord *new_record = &selected_month->history[selected_month->record_count]; 
-    //strcpy(new_record->category_name, category_menu[category_choice]); // copy the string to the structure category_name
-    // wait to fix
-    
+    struct expensesRecord *new_record = &selected_month->history[selected_month->record_count]; //(here is the problem)
+    strcpy(new_record->category_name, category_menu[category_choice]); // copy the string to the structure category_name , (fixed)
 
+    while (1) {
+        printf("Enter Item Description (Max 49 chars): ");
+        if (fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin) != NULL) { // check the value enter isnt a null value
+            break;
+        }
+        if (strchr(new_record->expenses_description, '\n')) {//strchr: standard library function used to locate the first occurrence of a specific character within a null-terminated string (search the "/n" character in the Description)
+            RemoveNewLine(new_record->expenses_description); //then pass it to this function to remove the "\n"
+            if (strlen(new_record->expenses_description) == 0) { // check the string is it empty?
+                printf("[!] Error: Description cannot be empty.\n"); // do if empty
+                continue; // this call the function continue the while loop dont jump to the break below
+            }
+            break; // if all ok, break this loop
+        } else {
+            printf("[!] Error: Description too long! Please keep it under 50 characters.\n"); // if cant find the "\n" mean it has been cut off from the string array (another word the string is to long)
+            ClearInputBuffer(); // clear the leftover data in the input memory
+        }
+    }
+    new_record->item_amount = CheckValidDouble("Enter the amount for this item: $"); // get the amount and check is it valid or not
+
+    selected_month->category_totals[adjusted_category_idx] += new_record->item_amount; 
+    selected_month->total_spending += new_record->item_amount; // after get the amount, add it to the total spending
+    selected_month->record_count++; // as one record get add, update the array count
+
+    SaveUserData(); // save the data immediately after add record to prevent data lose
+    printf("\nRecord added successfully! Press any key..."); //inform user
+    getch(); //wait till the user want to proceed
 }
 
 void DisplayASCIIGraph(float percentage){
-    int star_no = (int) (percentage/2.5);//too long the star
+    //int star_no = (int) (percentage/2.5);//too long the star
     int star_no = (int) (percentage/5);
     printf("[");
     for (int i = 0; i < 20; i++){
@@ -261,15 +398,15 @@ void CalculateandPrintFinancialStatusandKaomoji(double total_spending, double mo
     float budget = monthly_income - total_spending;
     if(expense_percentage >= 0){
         if (expense_percentage < 40.0){
-            printf("Excellent Surplus   |Grade: A || ($_$) Simply Lovely! | Budget left: %.2f", budget);
+            printf("Excellent Surplus   |Grade: A || ($_$) Simply Lovely! | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 60.0){
-            printf("Healthy Balance     |Grade: B || ( •⌄• )b Looking Good| Budget left: %.2f", budget);
+            printf("Healthy Balance     |Grade: B || ( •⌄• )b Looking Good| Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 75.0){
-            printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f", budget);
+            printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 90.0){
-            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f", budget);
+            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else{
-            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f", budget);
+            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         };
     }else{
         printf("Somthing is wrong with the program!!");// for debug use
@@ -290,12 +427,12 @@ void PrintDashBoard(int user_index, int month_index){
     DisplayASCIIGraph(percentage);
     printf("--------------------------------------------------------------------------------------\n");
     CalculateandPrintFinancialStatusandKaomoji(selected_month->total_spending,selected_month->month_income);
+    //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
     printf("--------------------------------------------------------------------------------------\n");
     printf("Transaction History\n");
     for (int i = 0; i < selected_month->record_count ;i++){
         struct expensesRecord *record = &selected_month->history[i];
-
-        char noted = (record->item_amount > warning_line)? '  !  ': '     '; 
+        char noted = (record->item_amount > warning_line)? '!': ' '; 
         //(condition) ? if true : if false
 
         printf("No.|      Category      |                Description              | Flag|Amount");
@@ -314,13 +451,56 @@ void PrintDashBoard(int user_index, int month_index){
 
 //Main function
 int main (){
-    while(1){
+    LoadUserData(); //load the data when start the program
+    char entry_option[3][30] = {"Login", "Register New User", "Exit"};
+    int running = 1;
 
+    while(running){ // check is 1 or not : 0 is false the the program will exit 
+        int choice = SelectOption(entry_option, 3);
+        if (choice == 0){ // this mean user choos login
+            int login_result = UserLogin();
+            if (login_result != -1){ // if the login result is -1 mean the login fail, so only when it is not -1 then proceed to the dash board
+                int logged_in = 1;
+                while(logged_in){
+                    GetMonthlyIncome(current_active_user, student_list[current_active_user].current_month); // call function and pass the variable to it
+                    char dash_menu[6][30] = {"Add Record","Dashboard", "Next Month", "History", "Logout"};
+                    int dash_choice = SelectOption(dash_menu, 6);
+                    if (dash_choice == 0) AddRecord(login_result);
+                    else if (dash_choice == 1) PrintDashBoard(login_result, student_list[login_result].current_month);
+                    else if (dash_choice == 2) student_list[login_result].current_month++;
+                    else if (dash_choice == 3) {
+                        char history_menu[12][30];
+                        int month_count = student_list[login_result].current_month + 1;
+                        for(int i=0; i < month_count; i++) strcpy(history_menu[i], student_list[login_result].month[i].month_name);
+                        int h_choice = SelectOption(history_menu, month_count);
+                        PrintDashBoard(login_result, h_choice);
+                    }
+                    else if (dash_choice == 4) logged_in = 0;
+                }
+            }
+         }else if(choice == 1){
+            RegisterUser();
+        }else if(choice == 2){
+            running = 0;
+         }
     }
-
     return 0;
 }
 
+//easter egge to pay tribute to fast inverse square root function in the game Quake III Arena (https://en.wikipedia.org/wiki/Fast_inverse_square_root)
+// float Q_rsqrt(float number)
+// {
+//   long i;
+//   float x2, y;
+//   const float threehalfs = 1.5F;
 
+//   x2 = number * 0.5F;
+//   y  = number;
+//   i  = * ( long * ) &y;                       // evil floating point bit level hacking
+//   i  = 0x5f3759df - ( i >> 1 );               // what the fxxk?
+//   y  = * ( float * ) &i;
+//   y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+//   // y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
-
+//   return y;
+// }
