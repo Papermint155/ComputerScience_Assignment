@@ -95,8 +95,31 @@ int SelectOption(char option[][30], int total_choice){ // havent conplete yet
     while(1){
         ClearScreen();
         printf("Please use Arrow key(Up and down to select)");
-
+        for(int i = 0; i < total_choice; i++){
+            if (i == current_selection){
+                printf("-> %s\n", option[i]);
+            } else {
+                printf("   %s\n", option[i]);
+            }
+        }
+        int key_pressed = getch(); // force change to ascii
+        if (key_pressed == 224) { // check the thing is it an unsign character https://stackoverflow.com/questions/13990600/how-to-detect-arrow-keys
+            key_pressed = getch();
+            if (key_pressed == 72) current_selection = (current_selection - 1 + total_choice) % total_choice; // code for up 
+            if (key_pressed == 80) current_selection = (current_selection + 1) % total_choice; //code for down 
+        } else if (key_pressed == 13) return current_selection; //code for enter 
     }
+    /*Press down 
+    0 + 1 = 1 % 3 = 1
+    1 + 1 = 2 % 3 = 2
+    2 + 1 = 3 % 3 = 0
+    etc
+    Press up
+    0 - 1 + 3 = 2 % 3 = 2
+    2 - 1 + 3 = 4 % 3 = 1
+    1 - 1 + 3 = 3 % 3 = 0
+    etc
+    */
 }
 
 void SaveUserData (){
