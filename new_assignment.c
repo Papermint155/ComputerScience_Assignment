@@ -35,6 +35,7 @@ struct MonthlyData
     double month_income;
     double total_spending;
     struct expensesRecord history[100];
+    int record_count; // added record_count here , as if use sizeof() to read the struct the size is the full size ,not the size already with data
 };
 
 struct expensesRecord
@@ -60,7 +61,7 @@ void ClearInputBuffer() { //Clear the memory that used to store the input temper
     while ((c = getchar()) != '\n'); // Discard characters remaining in the input buffer to prevent skipping next input
 }
 
-void CheckInputBlank(char* str){
+int CheckInputBlank(char* str){ //debug at here, forgot it will return int 
     if (strlen(str) == 0){
         return 1; // 1 = true 
     } 
@@ -97,6 +98,7 @@ int SelectOption(char option[][30], int total_choice){
 
 void SaveUserData (){
     FILE *file_path = fopen("userdata.bin", "wb"); // 'wb' = write binary
+    FILE *file_path = fopen("userdata.txt", "w"); // 'wb' = write binary
     if (file_path == NULL) {//check weather it is no file 
         printf("[!] Error saving data!\n"); //if cant save , print error data
         return;
@@ -134,7 +136,8 @@ void SaveUserData (){
 
 
 void LoadUserData(){
-    FILE *file_path = fopen("userdata.bin", "rb"); // 'rb' = read binary
+    //FILE *file_path = fopen("userdata.bin", "rb"); // 'rb' = read binary , if this can be use in the securuty
+    FILE *file_path = fopen("userdata.txt", "r"); // use txt file for visualise the data in it 
     if (file_path == NULL) { // check weather it is no file 
         return; // No file yet, just return without value to exit the funtion
     }
@@ -173,11 +176,51 @@ void RegisterUser(){
 int UserLogin(){
 
 }
-void GetMonthlyIncome(int user_idx, int month_idx){
+void GetMonthlyIncome(int user_index, int month_index){
+    struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
+    if (selected_month->month_income == 0){
+        while (1)
+        {
+            ClearScreen();
+            printf("\n ----- Monthly Income (Month %d) -----\n", month_index + 1);
+            printf("Please enter the Month Name(eg. June): ");
+            //fget(selected_month->month_name, 20, stdin);
+            fget(selected_month->month_name, sizeof(selected_month->month_name), stdin);
+            RemoveNewLine(selected_month->month_name);
 
+            if(!CheckInputBlank(selected_month->month_name)){
+                break;
+            }else{
+                printf("Monthly Income only can be a positive and non-zero rational number");
+                getch(); //let user have time the see the message
+            }
+        }
+    }
 }
 
-void AddRecord(int user_idx) {
+void AddRecord(int user_index) {
+    int month_index = student_list[user_index].current_month;
+    struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
+
+    if (selected_month->record_count > 100){
+        printf("The database space is fully oppucied");
+        getch();
+        return;
+    }
+
+    char category_menu[6][30] = {"Back/Return", "Food", "Transport", "Entertainment", "Study", "Bill&Expenses"};// 2D array, first [] is save how may string in the array , second [] is string array.
+    int category_choice = SelectMenuOption(category_menu, 6); //pass the array to function, and told them we got how may array (String array in 2D array)
+    
+    if(category_choice == 0){
+        return;
+    }
+    int adjusted_category_idx = category_choice - 1; // Correctly maps Food to 0, Transport to 1, etc later will use
+
+    struct expenseRecord *new_record = &selected_month->history[selected_month->record_count]; 
+    //strcpy(new_record->category_name, category_menu[category_choice]); // copy the string to the structure category_name
+    // wait to fix
+    
+
 }
 
 void DisplayASCIIGraph(float percentage){
@@ -191,29 +234,81 @@ void DisplayASCIIGraph(float percentage){
             printf(" ");
         }
     }
-    printf("] %.2f%%"/*%% so ot can print %*/,percentage); //https://prepinsta.com/c-programming-language-tutorial/how-to-print-percentile-using-printf/
+    printf("] %.2f%%"/*%% so it can print %*/,percentage); //https://prepinsta.com/c-programming-language-tutorial/how-to-print-percentile-using-printf/
 }
 
-/* (Expected Dash board layout)
+/* (Planning Dash board layout)
 Hi xxx
 --------------------------------------------------------------------------------------
 Monthly Income :
 Total Spending: 
+Percentage Spend:
 --------------------------------------------------------------------------------------
 Bar Graph
 []
 --------------------------------------------------------------------------------------
 Financial Status ,Gred , Kaomoji
 --------------------------------------------------------------------------------------
+Transcation History
+--------------------------------------------------------------------------------------
 Press Any key to Return
 
 
 */
-void PrintDashBoard(){
 
+void CalculateandPrintFinancialStatusandKaomoji(double total_spending, double monthly_income){
+    double expense_percentage = (total_spending/monthly_income)*100;
+    float budget = monthly_income - total_spending;
+    if(expense_percentage >= 0){
+        if (expense_percentage < 40.0){
+            printf("Excellent Surplus   |Grade: A || ($_$) Simply Lovely! | Budget left: %.2f", budget);
+        }else if(expense_percentage < 60.0){
+            printf("Healthy Balance     |Grade: B || ( •⌄• )b Looking Good| Budget left: %.2f", budget);
+        }else if(expense_percentage < 75.0){
+            printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f", budget);
+        }else if(expense_percentage < 90.0){
+            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f", budget);
+        }else{
+            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f", budget);
+        };
+    }else{
+        printf("Somthing is wrong with the program!!");// for debug use
+    }
+    
 }
 
-void CalculateandPrintFinancialStatusandKaomoji(){
+void PrintDashBoard(int user_index, int month_index){
+    struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
+    double warning_line = selected_month->month_income*0.15;
+    float percentage;
+    printf("Hi, %s : Month : %s \n",student_list[user_index].user_name, selected_month->month_name);
+    printf("--------------------------------------------------------------------------------------\n");
+    printf("Monthly Income: %lf\n", selected_month->month_income);
+    printf("Total Spending: %lf\n", selected_month->total_spending);
+    printf("Percentage Spend: %.2f%%\n", (selected_month->total_spending/selected_month->month_income));
+    printf("--------------------------------------------------------------------------------------\n");
+    DisplayASCIIGraph(percentage);
+    printf("--------------------------------------------------------------------------------------\n");
+    CalculateandPrintFinancialStatusandKaomoji(selected_month->total_spending,selected_month->month_income);
+    printf("--------------------------------------------------------------------------------------\n");
+    printf("Transaction History\n");
+    for (int i = 0; i < selected_month->record_count ;i++){
+        struct expensesRecord *record = &selected_month->history[i];
+
+        char noted = (record->item_amount > warning_line)? '  !  ': '     '; 
+        //(condition) ? if true : if false
+
+        printf("No.|      Category      |                Description              | Flag|Amount");
+        printf("%03d|%-20s|%-20.20s|%c|%-6.2f|", i, record->category_name, record->expenses_description, noted, record->item_amount);
+        
+    }
+
+    if (selected_month->record_count == 0){
+        printf("No record found in Month %s",selected_month->month_name);
+    }
+    printf("--------------------------------------------------------------------------------------\n");
+    printf("Press Any key to Return");
+    getch();
 
 }
 
