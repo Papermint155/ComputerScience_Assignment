@@ -39,7 +39,6 @@ struct MonthlyData
 };
 
 struct userStudent {
-    int user_id;
     char user_name [50];
     char user_password[20];
     struct MonthlyData month[12];
