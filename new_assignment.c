@@ -206,7 +206,7 @@ void RegisterUser(){
     struct userStudent *new_student = &student_list[registered_user];
     char temp_input[150]; // Use a larger buffer to catch the overflow to let user enter over 50 
 
-    //Username Loop (same logic as the name part)
+    //Get Username
     while (1) {
         printf("---Register New User--- (press 0 to cancel)\n"); // update the message to register new user
         printf("Username (Max 20): ");
@@ -234,7 +234,7 @@ void RegisterUser(){
         break;
     }
 
-    //Password Loop 
+    //Get Password
     while (1) {
        printf("Password (Max 20): ");
         fgets(temp_input, sizeof(temp_input), stdin);
@@ -273,7 +273,7 @@ int UserLogin(){ // same logic as above so i direct use the code from register p
         getch();
         return -1; // return -1 to indicate login failure
     }
-    //Username Loop (same logic as the name part)
+    //Get Username
     while (1) {
         printf("---Login--- (press 0 to cancel)\n"); // update the message to login
         printf("Username (Max 20): ");
@@ -300,7 +300,7 @@ int UserLogin(){ // same logic as above so i direct use the code from register p
         break;
     }
 
-    //Password Loop 
+    //Get password
     while (1) {
        printf("Password (Max 20): ");
         fgets(input_password, sizeof(input_password), stdin);
