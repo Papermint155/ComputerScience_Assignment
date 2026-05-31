@@ -380,13 +380,13 @@ void AddRecord(int user_index) {
         printf("Enter Item Description (Max 49 chars): ");
         if (fgets(new_record->expenses_description, sizeof(new_record->expenses_description), stdin) != NULL) { // check the value enter isnt a null value
             if (strchr(new_record->expenses_description, '\n')) {//strchr: standard library function used to locate the first occurrence of a specific character within a null-terminated string (search the "/n" character in the Description)
-                RemoveNewLine(new_record->expenses_description); //then pass it to this function to remove the "\n"
-                if (strlen(new_record->expenses_description) == 0) { // check the string is it empty?
+                if (CheckInputBlank(new_record->expenses_description) == 1) { // check the string is it empty?
                     printf("[!] Error: Description cannot be empty.\n");
                     getch(); 
                     continue; // this call the function continue the while loop dont jump to the break below
                 }
-                break; // if all ok, break this loop
+                RemoveNewLine(new_record->expenses_description); //remove the enter so it will not disturb the dashboard display
+                break;// if all ok, break this loop
             } else {
                 printf("[!] Error: Description too long! Please keep it under 50 characters.\n"); // if cant find the "\n" mean it has been cut off from the string array (another word the string is to long)
                 ClearInputBuffer(); // clear the leftover data in the input memory
@@ -451,9 +451,9 @@ void CalculateandPrintFinancialStatusandKaomoji(double total_spending, double mo
         }else if(expense_percentage < 75.0){
             printf("Modest Savings      |Grade: C || ( -_-) Be Careful... | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
         }else if(expense_percentage < 90.0){
-            printf("Modest Savings      |Grade: D || (;O口O) High Risk!   | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("High Risk           |Grade: D || (;O口O) High Risk!   | Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg) fixed typo
         }else{
-            printf("Modest Savings      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg)
+            printf("Overspend/Debt      |Grade: F || (T _ T) Budget Crisis| Budget left: %.2f\n", budget); //Ciallo～(∠・ω< )⌒☆ (Easter_egg) fixed typo
         };
     }else{
         printf("Somthing is wrong with the program!!\n");// for debug use
