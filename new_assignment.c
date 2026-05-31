@@ -359,7 +359,7 @@ void AddRecord(int user_index) {
     struct MonthlyData *selected_month = &student_list[user_index].month[month_index];
 
     if (selected_month->record_count > 100){
-        printf("The database space is fully oppucied");
+        printf("The database space is fully occupied");
         getch();
         return;
     }
@@ -519,7 +519,7 @@ int main (){
                 while(logged_in){
                     GetMonthlyIncome(current_active_user, student_list[current_active_user].current_month); // call function and pass the variable to it
                     char dash_menu[5][30] = {"Add Record","Dashboard", "Next Month", "History", "Logout"};
-                    int dash_choice = SelectOption(dash_menu, 6);
+                    int dash_choice = SelectOption(dash_menu, 5);
                     if (dash_choice == 0) AddRecord(current_active_user);
                     else if (dash_choice == 1) PrintDashBoard(current_active_user, student_list[current_active_user].current_month);
                     else if (dash_choice == 2) student_list[current_active_user].current_month++;
