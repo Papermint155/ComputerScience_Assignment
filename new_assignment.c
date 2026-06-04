@@ -78,7 +78,7 @@ double CheckValidDouble(char *message){ // puting * to wrong (solve)
     double value; 
     while (1){
         printf("%s", message);
-        if (scanf("%lf",&value) == 1 && value > 0){
+        if (scanf("%lf",&value) == 1 && value > 0 && value < 2147483647){
             ClearInputBuffer();
             return value;
         } else {
@@ -470,7 +470,7 @@ void PrintDashBoard(int user_index, int month_index){
     printf("--------------------------------------------------------------------------------------\n");
     printf("Monthly Income: %lf\n", selected_month->month_income);
     printf("Total Spending: %lf\n", selected_month->total_spending);
-    printf("Percentage Spend: %.2f%%\n", (selected_month->total_spending/selected_month->month_income )*100);
+    printf("Percentage Spent: %.2f%%\n", (selected_month->total_spending/selected_month->month_income )*100);
     printf("--------------------------------------------------------------------------------------\n");
     printf("Bar Graph\n");
     char *cat_names[] = {"Food", "Transport", "Entertainment", "Study", "Bill&Expenses"}; // The category type
